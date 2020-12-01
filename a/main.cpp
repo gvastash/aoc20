@@ -29,9 +29,29 @@
 #include <chrono>
 #include <random>
 
+using namespace std;
+
 typedef long long int i64;
 
 int main(int argc, char* argv[]) {
+    vector<i64> a;
+
+    while (!cin.eof()) {
+        i64 t;
+        cin >> t;
+        a.push_back(t);
+    }
+
+    for (i64 i = 0; i < a.size(); i++) {
+        for (i64 j = i + 1; j < a.size(); j++) {
+            for (i64 k = j + 1; k < a.size(); k++) {
+                if (a[i] + a[j] + a[k] == 2020) {
+                    cout << a[i] * a[j] * a[k] << endl;
+                }
+            }
+        }
+    }
+
 
     return 0;
 }
