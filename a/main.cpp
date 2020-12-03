@@ -34,23 +34,29 @@ using namespace std;
 typedef long long int i64;
 
 int main(int argc, char* argv[]) {
-    vector<i64> a;
-
+    i64 R = 0;
     while (!cin.eof()) {
-        i64 t;
-        cin >> t;
-        a.push_back(t);
+        vector<string> q(3);
+        for (i64 i = 0; i < 3; i++) {
+            cin >> q[i];
+        }
+
+        auto i = q[0].find('-');
+        q[0][i] = ' ';
+
+        stringstream ss(q[0]);
+        i64 l, r;
+        ss >> l >> r;
+
+        char c = q[1][0];
+
+        string s = q[2];
+
+        R += ((s[l - 1] == c ? 1 : 0) + (s[r - 1] == c ? 1 : 0)) % 2;
     }
 
-    for (i64 i = 0; i < a.size(); i++) {
-        for (i64 j = i + 1; j < a.size(); j++) {
-            for (i64 k = j + 1; k < a.size(); k++) {
-                if (a[i] + a[j] + a[k] == 2020) {
-                    cout << a[i] * a[j] * a[k] << endl;
-                }
-            }
-        }
-    }
+    cout << R << endl;
+
 
 
     return 0;
