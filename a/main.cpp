@@ -33,31 +33,38 @@ using namespace std;
 
 typedef long long int i64;
 
+const i64 inf = 1'000'000'000'000'000'000ll + 7;
+
 int main(int argc, char* argv[]) {
-    i64 R = 0;
+    vector<string> a;
     while (!cin.eof()) {
-        vector<string> q(3);
-        for (i64 i = 0; i < 3; i++) {
-            cin >> q[i];
+        string t;
+        cin >> t;
+        a.push_back(t);
+    }
+
+    i64 R = 1;
+    for (i64 i = 0; i < a.front().size(); i++) {
+        for (pair<i64, i64> e : vector<pair<i64, i64>>({ {1, 1}, {1, 3}, {1, 5}, {1, 7}, {2, 1} })) {
+            i64 res = 0;
+
+            i64 r = 0;
+            i64 c = i;
+
+            while (r < a.size()) {
+                res += a[r][c] == '#' ? 1 : 0;
+                r += e.first;
+                c += e.second;
+                c %= a.front().size();
+            }
+
+            cerr << res << endl;
+            R *= res;
         }
-
-        auto i = q[0].find('-');
-        q[0][i] = ' ';
-
-        stringstream ss(q[0]);
-        i64 l, r;
-        ss >> l >> r;
-
-        char c = q[1][0];
-
-        string s = q[2];
-
-        R += ((s[l - 1] == c ? 1 : 0) + (s[r - 1] == c ? 1 : 0)) % 2;
+        break;
     }
 
     cout << R << endl;
-
-
 
     return 0;
 }
