@@ -72,39 +72,39 @@ int main(int argc, char* argv[]) {
         a.push_back(val);
     }
 
-    const i64 w = 25;
-    i64 target = 0;
-    for (i64 i = w; i < a.size(); i++) {
-        bool valid = false;
-        for (i64 j = i - w; j < i; j++) {
-            for (i64 k = j + 1; k < i; k++) {
-                valid |= a[j] + a[k] == a[i];
+    sort(a.begin(), a.end());
+    vector<i64> q(3 + 1);
+
+    for (i64 i = 0; i < a.size(); i++) {
+        i64 diff = a[i] - (i > 0 ? a[i - 1] : 0);
+        q[diff] += 1;
+    }
+    q[3] += 1;
+    cerr << q[1] << endl;
+    cerr << q[3] << endl;
+
+    cout << q[1] * q[3] << endl;
+
+    vector<i64> dp(a.size());
+    dp.back() = 1;
+    for (i64 i = a.size() - 2; i >= 0; i--) {
+        for (i64 j = i + 1; j < a.size(); j++) {
+            if (a[j] - a[i] > 3) {
+                break;
             }
-        }
-        if (!valid) {
-            target = a[i];
-            break;
+            dp[i] += dp[j];
         }
     }
 
+    i64 R = 0;
     for (i64 i = 0; i < a.size(); i++) {
-        i64 s = 0;
-        for (i64 j = i; j < a.size(); j++) {
-            s += a[j];
-            if (s == target) {
-                if (i == j) {
-                    break;
-                }
-                i64 low = a[i];
-                i64 high = a[i];
-                for (i64 k = i; k <= j; k++) {
-                    low = min(low, a[k]);
-                    high = max(high, a[k]);
-                }
-                cout << low + high << endl;
-            }
+        if (a[i] > 3) {
+            break;
         }
+        R += dp[i];
     }
+
+    cout << R << endl;
 
     return 0;
 }
