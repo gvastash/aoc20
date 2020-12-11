@@ -50,11 +50,6 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
-struct TOp {
-    string Cmd;
-    i64 Val;
-};
-
 int main(int argc, char* argv[]) {
     ios::sync_with_stdio(0); cin.tie(0); cout.tie(0); cout.precision(15); cout.setf(ios::fixed); cerr.precision(15); cerr.setf(ios::fixed);
 
@@ -62,7 +57,7 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    vector<TOp> ops;
+    vector<i64> a;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
@@ -72,61 +67,43 @@ int main(int argc, char* argv[]) {
         }
 
         stringstream ss(line);
-        TOp op;
-        ss >> op.Cmd >> op.Val;
-
-        ops.push_back(op);
+        i64 val;
+        ss >> val;
+        a.push_back(val);
     }
 
-    for (i64 i = 0; i < ops.size(); i++) {
-        cerr << i << ": " << ops[i].Cmd << " " << ops[i].Val << endl;
+    const i64 w = 25;
+    i64 target = 0;
+    for (i64 i = w; i < a.size(); i++) {
+        bool valid = false;
+        for (i64 j = i - w; j < i; j++) {
+            for (i64 k = j + 1; k < i; k++) {
+                valid |= a[j] + a[k] == a[i];
+            }
+        }
+        if (!valid) {
+            target = a[i];
+            break;
+        }
     }
 
-    for (i64 i = 0; i < ops.size(); i++) {
-        if (ops[i].Cmd == "nop") {
-            ops[i].Cmd = "jmp";
-        }
-        else if (ops[i].Cmd == "jmp") {
-            ops[i].Cmd = "nop";
-        }
-        else {
-            continue;
-        }
-        i64 acc = 0;
-        i64 eip = 0;
-        vector<bool> visited(ops.size());
-        while (0 <= eip && eip < ops.size()) {
-            if (visited[eip]) {
-                break;
+    for (i64 i = 0; i < a.size(); i++) {
+        i64 s = 0;
+        for (i64 j = i; j < a.size(); j++) {
+            s += a[j];
+            if (s == target) {
+                if (i == j) {
+                    break;
+                }
+                i64 low = a[i];
+                i64 high = a[i];
+                for (i64 k = i; k <= j; k++) {
+                    low = min(low, a[k]);
+                    high = max(high, a[k]);
+                }
+                cout << low + high << endl;
             }
-            visited[eip] = 1;
-            auto& cop = ops[eip];
-            if (cop.Cmd == "nop") {
-                eip += 1;
-                continue;
-            }
-            if (cop.Cmd == "jmp") {
-                eip += cop.Val;
-                continue;
-            }
-            if (cop.Cmd == "acc") {
-                acc += cop.Val;
-                eip += 1;
-                continue;
-            }
-            cerr << cop.Cmd << endl;
-            throw 1;
         }
-        if (ops[i].Cmd == "nop") {
-            ops[i].Cmd = "jmp";
-        }
-        else if (ops[i].Cmd == "jmp") {
-            ops[i].Cmd = "nop";
-        }
-        if (eip != ops.size()) {
-            continue;
-        }
-        cout << acc << endl;
     }
 
     return 0;
