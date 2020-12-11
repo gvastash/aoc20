@@ -50,37 +50,10 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
-map<string, map<string, i64>> q;
-
-map<string, bool> dp;
-
-bool contains(string cur, string prv) {
-    if (dp.count(cur)) {
-        return dp[cur];
-    }
-    for (auto nxt : q[cur]) {
-        if (nxt.first == prv) {
-            continue;
-        }
-        if (!contains(nxt.first, cur)) {
-            continue;
-        }
-        dp[cur] = true;
-        break;
-    }
-    return dp[cur];
-}
-
-i64 dfs(string cur, string prv) {
-    i64 R = 1;
-    for (auto nxt : q[cur]) {
-        if (nxt.first == prv) {
-            continue;
-        }
-        R += dfs(nxt.first, cur) * nxt.second;
-    }
-    return R;
-}
+struct TOp {
+    string Cmd;
+    i64 Val;
+};
 
 int main(int argc, char* argv[]) {
     ios::sync_with_stdio(0); cin.tie(0); cout.tie(0); cout.precision(15); cout.setf(ios::fixed); cerr.precision(15); cerr.setf(ios::fixed);
@@ -89,6 +62,7 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
+    vector<TOp> ops;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
@@ -97,52 +71,63 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        vector<string> z;
-
         stringstream ss(line);
-        while (!ss.eof()) {
-            string t;
-            ss >> t;
-            z.push_back(t);
+        TOp op;
+        ss >> op.Cmd >> op.Val;
+
+        ops.push_back(op);
+    }
+
+    for (i64 i = 0; i < ops.size(); i++) {
+        cerr << i << ": " << ops[i].Cmd << " " << ops[i].Val << endl;
+    }
+
+    for (i64 i = 0; i < ops.size(); i++) {
+        if (ops[i].Cmd == "nop") {
+            ops[i].Cmd = "jmp";
         }
-
-        string key = z[0] + " " + z[1];
-
-        i64 i = 4;
-        if (z[i] == "no") {
-            q[key];
+        else if (ops[i].Cmd == "jmp") {
+            ops[i].Cmd = "nop";
+        }
+        else {
             continue;
         }
-
-        while (i < z.size()) {
-            stringstream ss(z[i]);
-            i64 cnt = 0;
-            ss >> cnt;
-
-            string val = z[i + 1] + " " + z[i + 2];
-            q[key][val] = cnt;
-            i += 4;
+        i64 acc = 0;
+        i64 eip = 0;
+        vector<bool> visited(ops.size());
+        while (0 <= eip && eip < ops.size()) {
+            if (visited[eip]) {
+                break;
+            }
+            visited[eip] = 1;
+            auto& cop = ops[eip];
+            if (cop.Cmd == "nop") {
+                eip += 1;
+                continue;
+            }
+            if (cop.Cmd == "jmp") {
+                eip += cop.Val;
+                continue;
+            }
+            if (cop.Cmd == "acc") {
+                acc += cop.Val;
+                eip += 1;
+                continue;
+            }
+            cerr << cop.Cmd << endl;
+            throw 1;
         }
-    }
-
-    for (auto t : q) {
-        cerr << t.first << ": ";
-        for (auto e : t.second) {
-            cerr << e.first << "=" << e.second << " ";
+        if (ops[i].Cmd == "nop") {
+            ops[i].Cmd = "jmp";
         }
-        cerr << endl;
+        else if (ops[i].Cmd == "jmp") {
+            ops[i].Cmd = "nop";
+        }
+        if (eip != ops.size()) {
+            continue;
+        }
+        cout << acc << endl;
     }
-    dp["shiny gold"] = 1;
-
-    i64 R = 0;
-    for (auto t : q) {
-        R += contains(t.first, "") ? 1 : 0;
-    }
-
-    cout << R - 1 << endl;
-
-    i64 Q = dfs("shiny gold", "");
-    cout << Q - 1 << endl;
 
     return 0;
 }
