@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    vector<i64> a;
+    vector<string> a;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
@@ -66,45 +66,82 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        stringstream ss(line);
-        i64 val;
-        ss >> val;
-        a.push_back(val);
+        a.push_back(line);
     }
 
-    sort(a.begin(), a.end());
-    vector<i64> q(3 + 1);
+    i64 n = a.size();
+    i64 m = a.front().size();
 
-    for (i64 i = 0; i < a.size(); i++) {
-        i64 diff = a[i] - (i > 0 ? a[i - 1] : 0);
-        q[diff] += 1;
-    }
-    q[3] += 1;
-    cerr << q[1] << endl;
-    cerr << q[3] << endl;
+    while (true) {
+        auto b = a;
+        for (i64 i = 0; i < n; i++) {
+            for (i64 j = 0; j < m; j++) {
+                auto getOccuped = [&]() {
+                    i64 occuped = 0;
+                    for (i64 x = -1; x <= 1; x++) {
+                        for (i64 y = -1; y <= 1; y++) {
+                            if (x == 0 && y == 0) {
+                                continue;
+                            }
+                            for (i64 k = 1; true; k++) {
+                                i64 r = i + x * k;
+                                i64 c = j + y * k;
+                                if (0 > r || r >= n) {
+                                    break;
+                                }
+                                if (0 > c || c >= m) {
+                                    break;
+                                }
+                                if (a[r][c] == '.') {
+                                    continue;
+                                }
 
-    cout << q[1] * q[3] << endl;
-
-    vector<i64> dp(a.size());
-    dp.back() = 1;
-    for (i64 i = a.size() - 2; i >= 0; i--) {
-        for (i64 j = i + 1; j < a.size(); j++) {
-            if (a[j] - a[i] > 3) {
-                break;
+                                if (a[r][c] == '#') {
+                                    occuped += 1;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    return occuped;
+                };
+                switch (a[i][j]) {
+                    case '.':
+                        continue;
+                    case 'L': {
+                        if (!getOccuped()) {
+                            b[i][j] = '#';
+                        }
+                        break;
+                    }
+                    case '#': {
+                        if (getOccuped() >= 5) {
+                            b[i][j] = 'L';
+                        }
+                        break;
+                    }
+                }
             }
-            dp[i] += dp[j];
         }
-    }
-
-    i64 R = 0;
-    for (i64 i = 0; i < a.size(); i++) {
-        if (a[i] > 3) {
+        if (a == b) {
             break;
         }
-        R += dp[i];
+        a = b;
     }
 
-    cout << R << endl;
+    for (auto e : a) {
+        cerr << e << endl;
+    }
+
+    i64 occuped = 0;
+    for (auto e : a) {
+        for (auto c : e) {
+            occuped += (c == '#' ? 1 : 0);
+        }
+    }
+    cout << occuped << endl;
+
+
 
     return 0;
 }
