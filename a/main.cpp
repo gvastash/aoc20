@@ -50,114 +50,6 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
-char turnLeft(char d) {
-    switch (d) {
-    case 'E':
-        return 'N';
-    case 'W':
-        return 'S';
-    case 'N':
-        return 'W';
-    case 'S':
-        return 'E';
-    }
-
-    throw 1;
-}
-
-char turnRight(char d) {
-    switch (d) {
-    case 'E':
-        return 'S';
-    case 'W':
-        return 'N';
-    case 'N':
-        return 'E';
-    case 'S':
-        return 'W';
-    }
-
-    throw 1;
-}
-
-pair<i64, i64> turnWaypointRight(pair<i64, i64> wp) {
-    return {-wp.second, wp.first};
-}
-
-pair<i64, i64> turnWaypointLeft(pair<i64, i64> wp) {
-    return { wp.second, -wp.first };
-}
-
-void handleMove(pair<i64, i64> e, i64& x, i64& y, char& d) {
-    switch (e.first) {
-    case 'N':
-        y -= e.second;
-        break;
-    case 'S':
-        y += e.second;
-        break;
-    case 'W':
-        x -= e.second;
-        break;
-    case 'E':
-        x += e.second;
-        break;
-    case 'L':
-        for (i64 i = 0; i < e.second; i += 90) {
-            d = turnLeft(d);
-        }
-        break;
-    case 'R':
-        for (i64 i = 0; i < e.second; i += 90) {
-            d = turnRight(d);
-        }
-        break;
-    case 'F':
-        handleMove({ d, e.second }, x, y, d);
-        break;
-    default:
-        throw 1;
-    }
-}
-
-
-void handleWaypointMove(pair<i64, i64> e, i64& x, i64& y, i64& wpx, i64& wpy) {
-    switch (e.first) {
-    case 'N':
-        wpy -= e.second;
-        break;
-    case 'S':
-        wpy += e.second;
-        break;
-    case 'W':
-        wpx -= e.second;
-        break;
-    case 'E':
-        wpx += e.second;
-        break;
-    case 'L':
-        for (i64 i = 0; i < e.second; i += 90) {
-            auto t = turnWaypointLeft({ wpx, wpy });
-            wpx = t.first;
-            wpy = t.second;
-        }
-        break;
-    case 'R':
-        for (i64 i = 0; i < e.second; i += 90) {
-            auto t = turnWaypointRight({ wpx, wpy });
-            wpx = t.first;
-            wpy = t.second;
-        }
-        break;
-    case 'F':
-        x += wpx * e.second;
-        y += wpy * e.second;
-        break;
-    default:
-        throw 1;
-    }
-
-}
 
 int main(int argc, char* argv[]) {
     ios::sync_with_stdio(0); cin.tie(0); cout.tie(0); cout.precision(15); cout.setf(ios::fixed); cerr.precision(15); cerr.setf(ios::fixed);
@@ -166,42 +58,65 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    vector<pair<char, i64>> a;
-    while (!cin.eof()) {
-        string line;
-        getline(cin, line);
+    i64 t;
+    cin >> t;
+    string line;
+    cin >> line;
+    replace(line.begin(), line.end(), ',', ' ');
 
-        if (line.empty()) {
-            continue;
+    vector<i64> a;
+    stringstream ss(line);
+    while (!ss.eof()) {
+        string z;
+        ss >> z;
+        if (z.empty()) {
+            break;
         }
-
-        stringstream ss(line.substr(1));
+        stringstream tss(z);
         i64 val = 0;
-        ss >> val;
-
-        a.push_back({line[0], val});
+        tss >> val;
+        //if (val) {
+            a.push_back(val);
+        //}
     }
+
 
     /*
-    i64 x = 0;
-    i64 y = 0;
-    char d = 'E';
-
+    i64 bv = inf;
+    i64 bi = 0;
     for (auto e : a) {
-        handleMove(e, x, y, d);
-        //cerr << x << " " << y << endl;
+        i64 v = t % e == 0 ? 0 : e - t % e;
+        if (bv > v) {
+            bv = v;
+            bi = e;
+        }
     }
+
+    cerr << bv << " " << bi << endl;
+    cout << bv * bi << endl;
     */
 
-    i64 x = 0;
-    i64 y = 0;
-    i64 wpx = 10;
-    i64 wpy = -1;
-    for (auto e : a) {
-        handleWaypointMove(e, x, y, wpx, wpy);
+    i64 m = 0;
+    i64 d = a.front();
+    for (i64 i = 1; i < a.size(); i++) {
+        if (!a[i]) {
+            continue;
+        }
+        for (i64 j = 0; j < a[i]; j++) {
+            i64 v = (d * j + m) % a[i];
+            if (v > 0) {
+                v = a[i] - v;
+            }
+            if (v != i % a[i]) {
+                continue;
+            }
+            m = (d * j + m) % (d * a[i]);
+            d *= a[i];
+            break;
+        }
     }
-    i64 R = abs(x) + abs(y);
-    cout << R << endl;
+
+    cout << m << endl;
 
     return 0;
 }
