@@ -58,65 +58,86 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    i64 t;
-    cin >> t;
-    string line;
-    cin >> line;
-    replace(line.begin(), line.end(), ',', ' ');
+    i64 amask = -1;
+    i64 omask = 0;
 
-    vector<i64> a;
-    stringstream ss(line);
-    while (!ss.eof()) {
-        string z;
-        ss >> z;
-        if (z.empty()) {
-            break;
-        }
-        stringstream tss(z);
-        i64 val = 0;
-        tss >> val;
-        //if (val) {
-            a.push_back(val);
-        //}
-    }
+    map<i64, i64> z;
+    while (!cin.eof()) {
+        string line;
+        getline(cin, line);
 
-
-    /*
-    i64 bv = inf;
-    i64 bi = 0;
-    for (auto e : a) {
-        i64 v = t % e == 0 ? 0 : e - t % e;
-        if (bv > v) {
-            bv = v;
-            bi = e;
-        }
-    }
-
-    cerr << bv << " " << bi << endl;
-    cout << bv * bi << endl;
-    */
-
-    i64 m = 0;
-    i64 d = a.front();
-    for (i64 i = 1; i < a.size(); i++) {
-        if (!a[i]) {
+        if (line.empty()) {
             continue;
         }
-        for (i64 j = 0; j < a[i]; j++) {
-            i64 v = (d * j + m) % a[i];
-            if (v > 0) {
-                v = a[i] - v;
+
+        stringstream ss(line);
+        vector<string> tokens;
+
+        while (!ss.eof()) {
+            string t;
+            ss >> t;
+            tokens.push_back(t);
+        }
+
+        if (tokens.front() == "mask") {
+            amask = -1;
+            omask = 0;
+
+            reverse(tokens.back().begin(), tokens.back().end());
+            for (i64 i = 0; i < tokens.back().size(); i++) {
+                if (tokens.back()[i] == '0') {
+                    amask ^= (1ll << i);
+                    omask &= ~(1ll << i);
+                }
+                if (tokens.back()[i] == '1') {
+                    omask ^= (1ll << i);
+                    amask |= (1ll << i);
+                }
             }
-            if (v != i % a[i]) {
-                continue;
+        }
+        else {
+            auto b = tokens.front().find('[');
+            auto e = tokens.front().find(']');
+            stringstream ss1(tokens.front().substr(b + 1, e - b - 1));
+            stringstream ss2(tokens.back());
+
+            i64 adr;
+            i64 val;
+
+            ss1 >> adr;
+            ss2 >> val;
+
+            for (i64 i = 0; i < 36; i++) {
+                if (omask & (1ll << i)) {
+                    adr |= (1ll << i);
+                }
             }
-            m = (d * j + m) % (d * a[i]);
-            d *= a[i];
-            break;
+
+            vector<i64> adrs;
+            adrs.push_back(adr);
+            for (i64 i = 0; i < 36; i++) {
+                if (!(omask & (1ll << i)) && (amask & (1ll << i))) {
+                    vector<i64> nadrs;
+                    for (auto e : adrs) {
+                        nadrs.push_back(e | (1ll << i));
+                        nadrs.push_back(e & ~(1ll << i));
+                    }
+                    adrs = nadrs;
+                }
+            }
+
+            for (auto m : adrs) {
+                z[m] = val;
+            }
         }
     }
 
-    cout << m << endl;
+    i64 R = 0;
+    for (auto t : z) {
+        R += t.second;
+    }
+
+    cout << R << endl;
 
     return 0;
 }
