@@ -58,86 +58,51 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    i64 amask = -1;
-    i64 omask = 0;
+    string s;
+    cin >> s;
+    replace(s.begin(), s.end(), ',', ' ');
 
+    vector<i64> a;
+    stringstream ss(s);
+    while (!ss.eof()) {
+        i64 t;
+        ss >> t;
+
+        a.push_back(t);
+    }
+
+    //for (auto e : a) {
+    //    cerr << e << " ";
+    //}
+
+    map<i64, i64> q;
     map<i64, i64> z;
-    while (!cin.eof()) {
-        string line;
-        getline(cin, line);
 
-        if (line.empty()) {
-            continue;
-        }
+    i64 tm = 1;
+    i64 last = -1;
+    for (i64 i = 0; i < a.size(); i++) {
+        q[last = a[i]] = tm++;
+        //cerr << last << endl;
+    }
 
-        stringstream ss(line);
-        vector<string> tokens;
-
-        while (!ss.eof()) {
-            string t;
-            ss >> t;
-            tokens.push_back(t);
-        }
-
-        if (tokens.front() == "mask") {
-            amask = -1;
-            omask = 0;
-
-            reverse(tokens.back().begin(), tokens.back().end());
-            for (i64 i = 0; i < tokens.back().size(); i++) {
-                if (tokens.back()[i] == '0') {
-                    amask ^= (1ll << i);
-                    omask &= ~(1ll << i);
-                }
-                if (tokens.back()[i] == '1') {
-                    omask ^= (1ll << i);
-                    amask |= (1ll << i);
-                }
-            }
+    while (tm <= 30'000'000) {
+        if (q.count(last) && z.count(last)) {
+            last = q[last] - z[last];
         }
         else {
-            auto b = tokens.front().find('[');
-            auto e = tokens.front().find(']');
-            stringstream ss1(tokens.front().substr(b + 1, e - b - 1));
-            stringstream ss2(tokens.back());
-
-            i64 adr;
-            i64 val;
-
-            ss1 >> adr;
-            ss2 >> val;
-
-            for (i64 i = 0; i < 36; i++) {
-                if (omask & (1ll << i)) {
-                    adr |= (1ll << i);
-                }
-            }
-
-            vector<i64> adrs;
-            adrs.push_back(adr);
-            for (i64 i = 0; i < 36; i++) {
-                if (!(omask & (1ll << i)) && (amask & (1ll << i))) {
-                    vector<i64> nadrs;
-                    for (auto e : adrs) {
-                        nadrs.push_back(e | (1ll << i));
-                        nadrs.push_back(e & ~(1ll << i));
-                    }
-                    adrs = nadrs;
-                }
-            }
-
-            for (auto m : adrs) {
-                z[m] = val;
-            }
+            last = 0;
         }
+
+        if (q.count(last)) {
+            z[last] = q[last];
+        }
+        q[last] = tm++;
+        //cerr << last << endl;
     }
 
-    i64 R = 0;
-    for (auto t : z) {
-        R += t.second;
-    }
+    cout << last << endl;
 
-    cout << R << endl;
+
 
     return 0;
 }
