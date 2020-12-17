@@ -58,191 +58,99 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    map<string, pair<pair<i64, i64>, pair<i64, i64>>> a;
-    vector<vector<i64>> b;
-
-    i64 cnt = 0;
+    vector<string> a;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
-
         if (line.empty()) {
-            cnt += 1;
-            if (cnt == 3) {
-                break;
-            }
-            else {
-                continue;
-            }
+            break;
         }
+        a.push_back(line);
+    }
 
-        if (cnt == 0) {
-            auto i = line.find(':');
-            string prefix = line.substr(0, i);
-            string postfix = line.substr(i + 1);
-
-            stringstream ss(postfix);
-            vector<string> q;
-            while (!ss.eof()) {
-                string t;
-                ss >> t;
-                if (t.empty()) {
-                    break;
-                }
-                q.push_back(t);
-            }
-
-            vector<i64> z;
-            for (i64 i = 0; i <= 2; i += 2) {
-                auto j = q[i].find('-');
-                stringstream ss1(q[i].substr(0, j));
-                stringstream ss2(q[i].substr(j + 1));
-
-                pair<i64, i64> p;
-                ss1 >> p.first;
-                ss2 >> p.second;
-
-                if (i == 0) {
-                    a[prefix].first = p;
-                }
-                else {
-                    a[prefix].second = p;
-                }
-            }
-        }
-        else {
-            auto i = line.find(':');
-            if (i != string::npos) {
-                continue;
-            }
-
-            replace(line.begin(), line.end(), ',', ' ');
-            b.push_back(vector<i64>());
-
-            stringstream ss(line);
-            while (!ss.eof()) {
-                i64 v;
-                ss >> v;
-                b.back().push_back(v);
-            }
+    const i64 m = 6;
+    i64 clen = 2 * m + a.size();
+    vector<vector<vector<vector<char>>>> b(2 * m + 1, vector<vector<vector<char>>>(2 * m + 1, vector<vector<char>>(clen, vector<char>(clen, '.'))));
+    for (i64 i = 0; i < a.size(); i++) {
+        for (i64 j = 0; j < a[i].size(); j++) {
+            b[m][m][m + i][m + j] = a[i][j];
         }
     }
 
-    vector<set<string>> z(b.front().size());
-    for (i64 i = 0; i < b.front().size(); i++) {
-        for (auto& e : a) {
-            z[i].insert(e.first);
-        }
-    }
+    for (i64 qm = 0; qm < 6; qm++) {
+        auto c = b;
 
-    vector<bool> discard(b.size());
+        for (i64 h = 0; h < b.size(); h++) {
+            for (i64 k = 0; k < b[h].size(); k++) {
+                for (i64 i = 0; i < b[h][k].size(); i++) {
+                    for (i64 j = 0; j < b[h][k][i].size(); j++) {
 
-    for (i64 i = 1; i < b.size(); i++) {
-        for (i64 j = 0; j < b[i].size(); j++) {
-            i64 v = b[i][j];
-            bool f = false;
-            for (auto& e : a) {
-                if (e.second.first.first <= v && v <= e.second.first.second) {
-                    f = true;
-                }
-                if (e.second.second.first <= v && v <= e.second.second.second) {
-                    f = true;
-                }
-            }
-            if (!f) {
-                discard[i] = 1;
-            }
-        }
-    }
+                        i64 cnt = 0;
 
-    for (i64 j = 0; j < b.front().size(); j++) {
-        for (auto& e : a) {
-            bool f = true;
-            for (i64 i = 0; i < b.size(); i++) {
-                if (discard[i]) {
-                    continue;
-                }
+                        for (i64 dw = -1; dw <= 1; dw++) {
+                            for (i64 dz = -1; dz <= 1; dz++) {
+                                for (i64 dx = -1; dx <= 1; dx++) {
+                                    for (i64 dy = -1; dy <= 1; dy++) {
+                                        if (dx == 0 && dy == 0 && dz == 0 && dw == 0) {
+                                            continue;
+                                        }
 
-                i64 v = b[i][j];
+                                        i64 w = h + dw;
+                                        i64 z = k + dz;
+                                        i64 x = i + dx;
+                                        i64 y = j + dy;
 
-                if (e.second.first.first <= v && v <= e.second.first.second) {
-                    continue;
-                }
-                if (e.second.second.first <= v && v <= e.second.second.second) {
-                    continue;
-                }
-                f = false;
-            }
-            if (!f) {
-                z[j].erase(e.first);
-            }
-        }
-    }
+                                        if (0 > w || w >= b.size()) {
+                                            continue;
+                                        }
+                                        if (0 > z || z >= b[h].size()) {
+                                            continue;
+                                        }
+                                        if (0 > x || x >= b[h][k].size()) {
+                                            continue;
+                                        }
+                                        if (0 > y || y >= b[h][k][i].size()) {
+                                            continue;
+                                        }
 
-    bool moved = true;
-    while (moved) {
-        moved = false;
+                                        if (b[w][z][x][y] == '#') {
+                                            cnt += 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
-        for (i64 i = 0; i < z.size(); i++) {
-            if (z[i].size() == 1) {
-                auto v = *z[i].begin();
-
-                for (i64 j = 0; j < z.size(); j++) {
-                    if (i == j) {
-                        continue;
-                    }
-                    if (!z[j].count(v)) {
-                        continue;
-                    }
-                    z[j].erase(v);
-                    moved = true;
-                }
-                break;
-            }
-        }
-
-        for (auto& e : a) {
-            vector<i64> met;
-            for (i64 i = 0; i < z.size(); i++) {
-                if (z[i].count(e.first)) {
-                    met.push_back(i);
-                }
-            }
-
-            if (met.size() == 1 && z[met.front()].size() > 1) {
-                auto it = z[met.front()].begin();
-                while (it != z[met.front()].end()) {
-                    if (*it == e.first) {
-                        it++;
-                    }
-                    else {
-                        z[met.front()].erase(it++);
+                        if (c[h][k][i][j] == '#') {
+                            if (2 > cnt || cnt > 3) {
+                                c[h][k][i][j] = '.';
+                            }
+                        }
+                        else {
+                            if (cnt == 3) {
+                                c[h][k][i][j] = '#';
+                            }
+                        }
                     }
                 }
-                moved = true;
-                break;
+            }
+        }
+
+        b = c;
+    }
+
+    i64 R = 0;
+    for (i64 h = 0; h < b.size(); h++) {
+        for (i64 k = 0; k < b[h].size(); k++) {
+            for (i64 i = 0; i < b[h][k].size(); i++) {
+                for (i64 j = 0; j < b[h][k][i].size(); j++) {
+                    R += (b[h][k][i][j] == '.' ? 0 : 1);
+                }
             }
         }
     }
 
-    for (i64 i = 0; i < z.size(); i++) {
-        cerr << i << ": " << z[i].size();
-        for (auto e : z[i]) {
-            cerr << " " << e;
-        }
-        cerr << endl;
-    }
-
-
-    i64 R = 1;
-    for (i64 i = 0; i < z.size(); i++) {
-        if (z[i].begin()->find("departure") == string::npos) {
-            continue;
-        }
-        R *= b[0][i];
-    }
     cout << R << endl;
-    
 
     return 0;
 }
