@@ -50,6 +50,69 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
+i64 Calculate(string a) {
+    stack<char> q;
+    stringstream ss;
+    for (auto c : a) {
+        if (c == ' ') {
+            continue;
+        }
+        if ('0' <= c && c <= '9') {
+            ss << c;
+            continue;
+        }
+        if (c == ')') {
+            while (true) {
+                char t = q.top();
+                q.pop();
+                if (t == '(') {
+                    break;
+                }
+                ss << t;
+            }
+            continue;
+        }
+        if (c != '(') {
+            while (!q.empty() && q.top() != '(' && (c == q.top() || (c == '*' && q.top() == '+'))) {
+                ss << q.top();
+                q.pop();
+            }
+        }
+        q.push(c);
+    }
+    while (!q.empty()) {
+        ss << q.top();
+        q.pop();
+    }
+
+    string b = ss.str();
+    stack<i64> v;
+    for (auto c : b) {
+        if ('0' <= c && c <= '9') {
+            v.push((i64)c - '0');
+            continue;
+        }
+        i64 v2 = v.top();
+        v.pop();
+        i64 v1 = v.top();
+        v.pop();
+        if (c == '+') {
+            v.push(v1 + v2);
+        }
+        else if (c == '*') {
+            v.push(v1 * v2);
+        }
+        else {
+            throw 1;
+        }
+    }
+
+    if (v.size() != 1) {
+        throw 1;
+    }
+
+    return v.top();
+}
 
 int main(int argc, char* argv[]) {
     ios::sync_with_stdio(0); cin.tie(0); cout.tie(0); cout.precision(15); cout.setf(ios::fixed); cerr.precision(15); cerr.setf(ios::fixed);
@@ -68,89 +131,12 @@ int main(int argc, char* argv[]) {
         a.push_back(line);
     }
 
-    const i64 m = 6;
-    i64 clen = 2 * m + a.size();
-    vector<vector<vector<vector<char>>>> b(2 * m + 1, vector<vector<vector<char>>>(2 * m + 1, vector<vector<char>>(clen, vector<char>(clen, '.'))));
-    for (i64 i = 0; i < a.size(); i++) {
-        for (i64 j = 0; j < a[i].size(); j++) {
-            b[m][m][m + i][m + j] = a[i][j];
-        }
-    }
-
-    for (i64 qm = 0; qm < 6; qm++) {
-        auto c = b;
-
-        for (i64 h = 0; h < b.size(); h++) {
-            for (i64 k = 0; k < b[h].size(); k++) {
-                for (i64 i = 0; i < b[h][k].size(); i++) {
-                    for (i64 j = 0; j < b[h][k][i].size(); j++) {
-
-                        i64 cnt = 0;
-
-                        for (i64 dw = -1; dw <= 1; dw++) {
-                            for (i64 dz = -1; dz <= 1; dz++) {
-                                for (i64 dx = -1; dx <= 1; dx++) {
-                                    for (i64 dy = -1; dy <= 1; dy++) {
-                                        if (dx == 0 && dy == 0 && dz == 0 && dw == 0) {
-                                            continue;
-                                        }
-
-                                        i64 w = h + dw;
-                                        i64 z = k + dz;
-                                        i64 x = i + dx;
-                                        i64 y = j + dy;
-
-                                        if (0 > w || w >= b.size()) {
-                                            continue;
-                                        }
-                                        if (0 > z || z >= b[h].size()) {
-                                            continue;
-                                        }
-                                        if (0 > x || x >= b[h][k].size()) {
-                                            continue;
-                                        }
-                                        if (0 > y || y >= b[h][k][i].size()) {
-                                            continue;
-                                        }
-
-                                        if (b[w][z][x][y] == '#') {
-                                            cnt += 1;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (c[h][k][i][j] == '#') {
-                            if (2 > cnt || cnt > 3) {
-                                c[h][k][i][j] = '.';
-                            }
-                        }
-                        else {
-                            if (cnt == 3) {
-                                c[h][k][i][j] = '#';
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        b = c;
-    }
-
     i64 R = 0;
-    for (i64 h = 0; h < b.size(); h++) {
-        for (i64 k = 0; k < b[h].size(); k++) {
-            for (i64 i = 0; i < b[h][k].size(); i++) {
-                for (i64 j = 0; j < b[h][k][i].size(); j++) {
-                    R += (b[h][k][i][j] == '.' ? 0 : 1);
-                }
-            }
-        }
+    for (auto& e : a) {
+        R += Calculate(e);
     }
-
     cout << R << endl;
+
 
     return 0;
 }
