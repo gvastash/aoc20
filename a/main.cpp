@@ -50,68 +50,51 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
-i64 Calculate(string a) {
-    stack<char> q;
-    stringstream ss;
-    for (auto c : a) {
-        if (c == ' ') {
-            continue;
-        }
-        if ('0' <= c && c <= '9') {
-            ss << c;
-            continue;
-        }
-        if (c == ')') {
-            while (true) {
-                char t = q.top();
-                q.pop();
-                if (t == '(') {
-                    break;
-                }
-                ss << t;
-            }
-            continue;
-        }
-        if (c != '(') {
-            while (!q.empty() && q.top() != '(' && (c == q.top() || (c == '*' && q.top() == '+'))) {
-                ss << q.top();
-                q.pop();
-            }
-        }
-        q.push(c);
-    }
-    while (!q.empty()) {
-        ss << q.top();
-        q.pop();
+
+map<i64, vector<vector<i64>>> rules;
+map<i64, char> terms;
+
+set<i64> match(string& s, i64 rule, i64 i, i64 lvl) {
+    if (lvl > 100) {
+        return {};
     }
 
-    string b = ss.str();
-    stack<i64> v;
-    for (auto c : b) {
-        if ('0' <= c && c <= '9') {
-            v.push((i64)c - '0');
-            continue;
-        }
-        i64 v2 = v.top();
-        v.pop();
-        i64 v1 = v.top();
-        v.pop();
-        if (c == '+') {
-            v.push(v1 + v2);
-        }
-        else if (c == '*') {
-            v.push(v1 * v2);
+    if (i >= s.size()) {
+        return {};
+    }
+    if (terms.count(rule)) {
+        if (terms[rule] != s[i]) {
+            return {};
         }
         else {
-            throw 1;
+            return {i + 1};
         }
     }
 
-    if (v.size() != 1) {
-        throw 1;
+
+
+    set<i64> z;
+    for (auto& parts : rules[rule]) {
+        set<i64> q = { i };
+
+        for (auto part : parts) {
+            set<i64> nq;
+            for (auto j : q) {
+                auto m = match(s, part, j, lvl + 1);
+                for (auto k : m) {
+                    nq.insert(k);
+                }
+            }
+            q = nq;
+        }
+
+        for (auto k : q) {
+            z.insert(k);
+        }
+
     }
 
-    return v.top();
+    return z;
 }
 
 int main(int argc, char* argv[]) {
@@ -121,21 +104,89 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    vector<string> a;
+    i64 R = 0;
+    i64 cnt = 0;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
         if (line.empty()) {
-            break;
+            cnt++;
+            if (cnt > 1) {
+                break;
+            }
+            else {
+                auto vmax = max(rules.rbegin()->first, terms.rbegin()->first);
+                terms[vmax + 1] = '#';
+                rules[-1].push_back({});
+                rules[-1].back().push_back(0);
+                rules[-1].back().push_back(vmax + 1);
+            }
+            continue;
         }
-        a.push_back(line);
+
+        if (!cnt) {
+            auto colon = line.find(':');
+            stringstream rss(line.substr(0, colon));
+            i64 rule;
+            rss >> rule;
+            string data = line.substr(colon + 1);
+
+            if (rule == 8) {
+                data = data + " | 42 8";
+            }
+            if (rule == 11) {
+                data = data + " | 42 11 31";
+            }
+
+            auto quote = data.find('"');
+            if (quote != string::npos) {
+                terms[rule] = data[quote + 1];
+                continue;
+            }
+
+            vector<string> parts;
+            auto pipe = data.find('|');
+            if (pipe != string::npos) {
+                parts.push_back(data.substr(0, pipe));
+                parts.push_back(data.substr(pipe + 1));
+            }
+            else {
+                parts.push_back(data);
+            }
+
+            for (auto part : parts) {
+                stringstream ss(part);
+
+                i64 v1 = 0;
+                i64 v2 = 0;
+                i64 v3 = 0;
+                ss >> v1 >> v2 >> v3;
+
+
+                rules[rule].push_back({});
+                rules[rule].back().push_back(v1);
+                if (v2) {
+                    rules[rule].back().push_back(v2);
+                }
+                if (v3) {
+                    rules[rule].back().push_back(v3);
+                }
+            }
+        }
+        else {
+
+            line += '#';
+            i64 i = 0;
+            auto m = match(line, -1, i, 0);
+            if (m.size()) {
+                cerr << line << endl;
+                R += 1;
+            }
+        }
     }
 
-    i64 R = 0;
-    for (auto& e : a) {
-        R += Calculate(e);
-    }
     cout << R << endl;
+
 
 
     return 0;
