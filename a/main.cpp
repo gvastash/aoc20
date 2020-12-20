@@ -50,51 +50,143 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
+map<string, vector<pair<i64, i64>>> q;
+map<i64, vector<string>> tiles;
 
-map<i64, vector<vector<i64>>> rules;
-map<i64, char> terms;
+void add(string s, i64 tile, i64 flag) {
+    q[s].push_back({ tile, flag });
+    reverse(s.begin(), s.end());
+    q[s].push_back({ tile, flag });
+}
 
-set<i64> match(string& s, i64 rule, i64 i, i64 lvl) {
-    if (lvl > 100) {
-        return {};
+string Get(i64 tile, i64 flag) {
+    if (flag == 0) {
+        return tiles[tile].front();
     }
-
-    if (i >= s.size()) {
-        return {};
-    }
-    if (terms.count(rule)) {
-        if (terms[rule] != s[i]) {
-            return {};
+    else if (flag == 1) {
+        stringstream bss;
+        for (i64 i = 0; i < tiles[tile].size(); i++) {
+            bss << tiles[tile][i].back();
         }
-        else {
-            return {i + 1};
+        return bss.str();
+    }
+    else if (flag == 2) {
+        return tiles[tile].back();
+    }
+    else if (flag == 3) {
+        stringstream fss;
+        for (i64 i = 0; i < tiles[tile].size(); i++) {
+            fss << tiles[tile][i].front();
+        }
+        return fss.str();
+    }
+    else {
+        throw 1;
+    }
+}
+
+void Rotate(i64 tile) {
+    vector<string> res;
+    for (i64 i = 0; i < tiles[tile].front().size(); i++) {
+        stringstream ss;
+        for (i64 j = 0; j < tiles[tile].size(); j++) {
+            ss << tiles[tile][j][i];
+        }
+        res.push_back(ss.str());
+        reverse(res.back().begin(), res.back().end());
+    }
+    tiles[tile] = res;
+}
+
+void FlipRows(i64 tile) {
+    i64 i = 0;
+    i64 j = tiles[tile].size() - 1;
+
+    while (i < j) {
+        swap(tiles[tile][i++], tiles[tile][j--]);
+    }
+}
+
+void FlipCols(i64 tile) {
+    for (i64 k = 0; k < tiles[tile].size(); k++) {
+        i64 i = 0;
+        i64 j = tiles[tile].size() - 1;
+        while (i < j) {
+            swap(tiles[tile][k][i++], tiles[tile][k][j--]);
         }
     }
+}
 
+i64 CountPattern(i64 tile) {
+    vector<string> pattern = {
+        "                  # ",
+        "#    ##    ##    ###",
+        " #  #  #  #  #  #   "
+    };
 
-
-    set<i64> z;
-    for (auto& parts : rules[rule]) {
-        set<i64> q = { i };
-
-        for (auto part : parts) {
-            set<i64> nq;
-            for (auto j : q) {
-                auto m = match(s, part, j, lvl + 1);
-                for (auto k : m) {
-                    nq.insert(k);
+    i64 R = 0;
+    /*
+    for (i64 i = 0; i <= tiles[tile].size() - pattern.size(); i++) {
+        for (i64 j = 0; j <= tiles[tile][i].size() - pattern.front().size(); j++) {
+        }
+    }
+    */
+    for (i64 i = 0; i < tiles[tile].size(); i++) {
+        for (i64 j = 0; j < tiles[tile][i].size(); j++) {
+            i64 cnt = 0;
+            for (i64 x = 0; x < pattern.size(); x++) {
+                if (i + x >= tiles[tile].size()) {
+                    break;
+                }
+                for (i64 y = 0; y < pattern[x].size(); y++) {
+                    if (j + y >= tiles[tile][i].size()) {
+                        break;
+                    }
+                    cnt += 1;
+                    if (pattern[x][y] != '#') {
+                        continue;
+                    }
+                    if (tiles[tile][i + x][j + y] != '#' && tiles[tile][i + x][j + y] != 'O') {
+                        cnt -= 1;
+                    }
                 }
             }
-            q = nq;
-        }
 
-        for (auto k : q) {
-            z.insert(k);
-        }
+            if (cnt == pattern.size() * pattern.front().size()) {
+                for (i64 x = 0; x < pattern.size(); x++) {
+                    for (i64 y = 0; y < pattern[x].size(); y++) {
+                        if (pattern[x][y] != '#') {
+                            continue;
+                        }
 
+                        tiles[tile][i + x][j + y] = 'O';
+                    }
+                }
+                R += 1;
+            }
+        }
     }
 
-    return z;
+    if (R > 0) {
+        cerr << R << endl;
+        for (auto e : tiles[tile]) {
+            cerr << e << endl;
+        }
+
+        R = 0;
+        for (auto e : tiles[tile]) {
+            for (auto c : e) {
+                if (c == '#') {
+                    R += 1;
+                }
+            }
+        }
+
+        cout << R << endl;
+        exit(0);
+    }
+
+    return R;
 }
 
 int main(int argc, char* argv[]) {
@@ -104,90 +196,327 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
-    i64 R = 0;
-    i64 cnt = 0;
+    i64 tile = 0;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
+
         if (line.empty()) {
-            cnt++;
-            if (cnt > 1) {
-                break;
+            if (tile) {
+                tile = 0;
+                continue;
             }
-            else {
-                auto vmax = max(rules.rbegin()->first, terms.rbegin()->first);
-                terms[vmax + 1] = '#';
-                rules[-1].push_back({});
-                rules[-1].back().push_back(0);
-                rules[-1].back().push_back(vmax + 1);
-            }
+            break;
+        }
+
+        if (!tile) {
+            stringstream ss(line.substr(line.find(' ')));
+            ss >> tile;
             continue;
         }
 
-        if (!cnt) {
-            auto colon = line.find(':');
-            stringstream rss(line.substr(0, colon));
-            i64 rule;
-            rss >> rule;
-            string data = line.substr(colon + 1);
+        tiles[tile].push_back(line);
+    }
 
-            if (rule == 8) {
-                data = data + " | 42 8";
+    for (auto& e : tiles) {
+        add(e.second.front(), e.first, 0);
+        add(e.second.back(), e.first, 2);
+
+        {
+            stringstream fss;
+            stringstream bss;
+            for (i64 i = 0; i < e.second.size(); i++) {
+                fss << e.second[i].front();
+                bss << e.second[i].back();
             }
-            if (rule == 11) {
-                data = data + " | 42 11 31";
-            }
-
-            auto quote = data.find('"');
-            if (quote != string::npos) {
-                terms[rule] = data[quote + 1];
-                continue;
-            }
-
-            vector<string> parts;
-            auto pipe = data.find('|');
-            if (pipe != string::npos) {
-                parts.push_back(data.substr(0, pipe));
-                parts.push_back(data.substr(pipe + 1));
-            }
-            else {
-                parts.push_back(data);
-            }
-
-            for (auto part : parts) {
-                stringstream ss(part);
-
-                i64 v1 = 0;
-                i64 v2 = 0;
-                i64 v3 = 0;
-                ss >> v1 >> v2 >> v3;
-
-
-                rules[rule].push_back({});
-                rules[rule].back().push_back(v1);
-                if (v2) {
-                    rules[rule].back().push_back(v2);
-                }
-                if (v3) {
-                    rules[rule].back().push_back(v3);
-                }
-            }
-        }
-        else {
-
-            line += '#';
-            i64 i = 0;
-            auto m = match(line, -1, i, 0);
-            if (m.size()) {
-                cerr << line << endl;
-                R += 1;
-            }
+            add(fss.str(), e.first, 3);
+            add(bss.str(), e.first, 1);
         }
     }
 
+    map<i64, set<i64>> z;
+
+    for (auto& e : q) {
+        if (e.second.size() == 2) {
+            for (auto t : e.second) {
+                z[t.first].insert(t.second);
+            }
+            continue;
+        }
+        if (e.second.size() == 1) {
+            continue;
+        }
+        cerr << "sameCnt = " << e.second.size() << endl;
+    }
+
+    i64 R = 1;
+    i64 cnt = 0;
+    for (auto t : z) {
+        if (t.second.size() != 2) {
+            continue;
+        }
+        cnt += 1;
+        R *= t.first;
+    }
+    cerr << cnt << endl;
     cout << R << endl;
 
+    vector<vector<i64>> puzzle;
+    puzzle.push_back(vector<i64>());
 
+    for (auto t : z) {
+        if (t.second.size() == 2 && t.second.count(1) && t.second.count(2)) {
+            puzzle.back().push_back(t.first);
+        }
+    }
+
+    if (puzzle.back().size() != 1) {
+        throw 1;
+    }
+
+    //cerr << puzzle.back().back() << " ";
+    
+    if (false) {
+        i64 tile = puzzle.back().back();
+        auto origTile = tiles[tile];
+        do {
+            for (auto e : tiles[tile]) {
+                cerr << e << endl;
+            }
+            cerr << endl;
+            Rotate(tile);
+        } while (origTile != tiles[tile]);
+
+        do {
+            for (auto e : tiles[tile]) {
+                cerr << e << endl;
+            }
+            cerr << endl;
+            FlipRows(tile);
+        } while (origTile != tiles[tile]);
+
+        do {
+            for (auto e : tiles[tile]) {
+                cerr << e << endl;
+            }
+            cerr << endl;
+            FlipCols(tile);
+        } while (origTile != tiles[tile]);
+    }
+
+    set<i64> v;
+    while (true) {
+        i64 tile = puzzle.back().back();
+        v.insert(tile);
+
+        auto right = Get(tile, 1);
+
+        i64 nextTile = -1;
+        for (auto e : q[right]) {
+            if (e.first == tile) {
+                continue;
+            }
+            if (v.count(e.first)) {
+                continue;
+            }
+            if (nextTile != -1) {
+                throw 1;
+            }
+            nextTile = e.first;
+        }
+
+        if (nextTile == -1) {
+            i64 tile = puzzle.back().front();
+            auto down = Get(tile, 2);
+
+            for (auto e : q[down]) {
+                if (e.first == tile) {
+                    continue;
+                }
+                if (v.count(e.first)) {
+                    continue;
+                }
+                if (nextTile != -1) {
+                    throw 1;
+                }
+                nextTile = e.first;
+            }
+
+            if (nextTile == -1) {
+                break;
+            }
+
+            if (true) {
+                auto origTile = tiles[nextTile];
+                if (down != Get(nextTile, 0)) {
+                    do {
+                        if (down != Get(nextTile, 0)) {
+                            auto origTile = tiles[nextTile];
+
+                            do {
+                                FlipRows(nextTile);
+                                if (down == Get(nextTile, 0)) {
+                                    break;
+                                }
+                            } while (origTile != tiles[nextTile]);
+
+                            if (down == Get(nextTile, 0)) {
+                                break;
+                            }
+                        }
+
+                        if (down != Get(nextTile, 0)) {
+                            auto origTile = tiles[nextTile];
+
+                            do {
+                                FlipCols(nextTile);
+                                if (down == Get(nextTile, 0)) {
+                                    break;
+                                }
+                            } while (origTile != tiles[nextTile]);
+
+                            if (down == Get(nextTile, 0)) {
+                                break;
+                            }
+                        }
+
+                        Rotate(nextTile);
+                        if (down == Get(nextTile, 0)) {
+                            break;
+                        }
+                    } while (origTile != tiles[nextTile]);
+                }
+
+                auto top = Get(nextTile, 0);
+                if (down != top) {
+                    throw 1;
+                }
+            }
+            else {
+                break;
+            }
+
+            //cerr << endl;
+            //cerr << nextTile << " ";
+            puzzle.push_back({});
+            puzzle.back().push_back(nextTile);
+
+
+            continue;
+        }
+
+        if (true) {
+            auto origTile = tiles[nextTile];
+            if (right != Get(nextTile, 3)) {
+                do {
+                    if (right != Get(nextTile, 3)) {
+                        auto origTile = tiles[nextTile];
+
+                        do {
+                            FlipRows(nextTile);
+                            if (right == Get(nextTile, 3)) {
+                                break;
+                            }
+                        } while (origTile != tiles[nextTile]);
+
+                        if (right == Get(nextTile, 3)) {
+                            break;
+                        }
+                    }
+
+                    if (right != Get(nextTile, 3)) {
+                        auto origTile = tiles[nextTile];
+
+                        do {
+                            FlipCols(nextTile);
+                            if (right == Get(nextTile, 3)) {
+                                break;
+                            }
+                        } while (origTile != tiles[nextTile]);
+
+                        if (right == Get(nextTile, 3)) {
+                            break;
+                        }
+                    }
+
+                    Rotate(nextTile);
+                    if (right == Get(nextTile, 3)) {
+                        break;
+                    }
+
+
+                } while (origTile != tiles[nextTile]);
+            }
+
+            auto left = Get(nextTile, 3);
+            if (right != left) {
+                throw 1;
+            }
+        }
+
+
+        puzzle.back().push_back(nextTile);
+        //cerr << nextTile << " ";
+    }
+
+    for (i64 i = 0; i < puzzle.size(); i++) {
+        for (i64 j = 0; j < puzzle[i].size(); j++) {
+            cerr << puzzle[i][j] << " ";
+        }
+        cerr << endl;
+    }
+
+    vector<string> image;
+    for (i64 i = 0; i < puzzle.size(); i++) {
+        for (i64 row = 1; row < tiles[puzzle[i].front()].size() - 1; row++) {
+            stringstream ss;
+
+            for (i64 j = 0; j < puzzle[i].size(); j++) {
+                for (i64 col = 1; col < tiles[puzzle[i][j]][row].size() - 1; col++) {
+                    ss << tiles[puzzle[i][j]][row][col];
+                }
+            }
+
+            image.push_back(ss.str());
+        }
+    }
+
+    auto vmin = tiles.begin()->first - 1;
+    tiles[vmin] = image;
+
+    if (true) {
+        i64 tile = vmin;
+
+        auto origTile = tiles[tile];
+        do {
+            if (true) {
+                auto origTile = tiles[tile];
+
+                do {
+                    i64 R = CountPattern(vmin);
+                    cout << R << endl;
+
+                    FlipRows(tile);
+                } while (origTile != tiles[tile]);
+            }
+
+            if (true) {
+                auto origTile = tiles[tile];
+
+                do {
+                    i64 R = CountPattern(vmin);
+                    cout << R << endl;
+
+                    FlipCols(tile);
+                } while (origTile != tiles[tile]);
+            }
+
+            i64 R = CountPattern(vmin);
+            cout << R << endl;
+
+            Rotate(tile);
+        } while (origTile != tiles[tile]);
+    }
 
     return 0;
 }
