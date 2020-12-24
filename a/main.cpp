@@ -50,46 +50,6 @@ const i64 inf = 1'000'000'000'000'000'000ll;
 
 const long double eps = 1e-8;
 
-void Play(vector<vector<i64>>& q, vector<i64>& k) {
-    while (k[0] < q[0].size() && k[1] < q[1].size()) {
-        vector<i64> v = { q[0][k[0]], q[1][k[1]] };
-        if (k[0] + v[0] < q[0].size() && k[1] + v[1] < q[1].size()) {
-            vector<vector<i64>> nq(2);
-            vector<i64> nk(2);
-
-            for (i64 j = 0; j < 2; j++) {
-                for (i64 i = k[j]; i < q[j].size(); i++) {
-                    nq[j].push_back(q[j][k[j]]);
-                }
-            }
-
-            Play(nq, nk);
-
-            if (nk[0] < nq[0].size()) {
-                q[0].push_back(q[0][k[0]]);
-                q[0].push_back(q[1][k[1]]);
-            }
-            else {
-                q[1].push_back(q[1][k[1]]);
-                q[1].push_back(q[0][k[0]]);
-            }
-        }
-        else {
-            if (q[0][k[0]] > q[1][k[1]]) {
-                q[0].push_back(q[0][k[0]]);
-                q[0].push_back(q[1][k[1]]);
-            }
-            else {
-                q[1].push_back(q[1][k[1]]);
-                q[1].push_back(q[0][k[0]]);
-            }
-        }
-
-        k[0] += 1;
-        k[1] += 1;
-    }
-}
-
 int main(int argc, char* argv[]) {
     ios::sync_with_stdio(0); cin.tie(0); cout.tie(0); cout.precision(15); cout.setf(ios::fixed); cerr.precision(15); cerr.setf(ios::fixed);
 
@@ -97,43 +57,101 @@ int main(int argc, char* argv[]) {
         cerr << "i64 != long long int" << endl;
     }
 
+    set<pair<i64, i64>> q;
 
-    vector<vector<i64>> q(2);
-
-    i64 cnt = 0;
     while (!cin.eof()) {
         string line;
         getline(cin, line);
 
         if (line.empty()) {
-            cnt += 1;
-            if (cnt > 1) {
+            break;
+        }
+
+        i64 x = 0;
+        i64 y = 0;
+
+
+        for (i64 i = 0; i < line.size(); i++) {
+            switch (line[i]) {
+            case 'e':
+                x -= 1;
                 break;
+            case 'w':
+                x += 1;
+                break;
+            case 'n':
+                i += 1;
+                if (line[i] == 'e') {
+                    y -= 1;
+                }
+                else if (line[i] == 'w') {
+                    y -= 1;
+                    x += 1;
+                }
+                else {
+                    throw 1;
+                }
+                break;
+            case 's':
+                i += 1;
+                if (line[i] == 'e') {
+                    y += 1;
+                    x -= 1;
+                }
+                else if (line[i] == 'w') {
+                    y += 1;
+                }
+                else {
+                    throw 1;
+                }
+                break;
+            default:
+                throw 1;
             }
-            continue;
         }
 
-        if (line.find("Player") != string::npos) {
-            continue;
+        pair<i64, i64> p = { x, y };
+        if (q.count(p)) {
+            q.erase(p);
         }
-        stringstream ss(line);
-        i64 v = 0;
-        ss >> v;
-        q[cnt].push_back(v);
-    }
-
-    vector<i64> k(2);
-
-
-
-    i64 R = 0;
-    for (i64 j = 0; j < 2; j++) {
-        for (i64 i = k[j]; i < q[j].size(); i++) {
-            R += q[j][i] * (q[j].size() - i);
+        else {
+            q.insert(p);
         }
     }
 
-    cout << R << endl;
+    cout << q.size() << endl;
+
+
+    const i64 m = 200;
+    const vector<pair<i64, i64>> z = { {-1, 0}, {1, 0}, {0, -1}, {1, -1}, {-1, 1}, {0, 1} };
+    for (i64 tt = 1; tt <= 100; tt++) {
+        set<pair<i64, i64>> nq;
+
+        for (i64 y = -m; y <= m; y++) {
+            for (i64 x = -m; x <= m; x++) {
+                i64 b = 0;
+                for (auto e : z) {
+                    b += q.count({ x + e.first, y + e.second });
+                }
+
+                if (q.count({ x, y })) {
+                    if (0 < b && b <= 2) {
+                        nq.insert({ x, y });
+                    }
+                }
+                else {
+                    if (b == 2) {
+                        nq.insert({ x, y });
+                    }
+                }
+            }
+        }
+
+        q = nq;
+        cout << q.size() << endl;
+    }
+
+
 
     return 0;
 }
